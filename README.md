@@ -4,11 +4,11 @@ Collate publications from OAI_PMH source
 Compile:
 
 ```
-mvn compile
+mvn clean compile assembly:single
 ```
 
 Run:
 
 ```
-java -classpath ./target/classes cz.hobbs.openaire.App https://pub.uni-bielefeld.de/oai?verb=ListRecords&metadataPrefix=oai_datacite
+java -jar target/collate-publications-1.0-SNAPSHOT-jar-with-dependencies.jar -e https://pub.uni-bielefeld.de/oai?verb=ListRecords&metadataPrefix=oai_datacite
 ```
