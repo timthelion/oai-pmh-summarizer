@@ -9,6 +9,7 @@ import java.io.PrintStream;
 import static org.hamcrest.CoreMatchers.containsString;
 import org.junit.Before;
 import org.junit.Test;
+import static org.hamcrest.Matchers.not;
 
 public class OAIPMHDatasetTest
 {
@@ -36,6 +37,21 @@ public class OAIPMHDatasetTest
     	
         ds.summarizeByYear();
         assertThat(outContent.toString(), containsString("2004"));
+        assertThat(outContent.toString(), containsString("publicationYear"));
+        
+        System.setOut(originalOut);
+        System.setErr(originalErr);
+        System.out.println(outContent);
+    }
+    
+    @Test
+    public void testSummarizeByFiveYearPeriod() {
+        System.setOut(new PrintStream(outContent));
+        System.setErr(new PrintStream(errContent));
+    	
+        ds.summarizeInFiveYearPeriods();
+        assertThat(outContent.toString(), containsString("1970"));
+        assertThat(outContent.toString(), not(containsString("1972")));
         assertThat(outContent.toString(), containsString("publicationYear"));
         
         System.setOut(originalOut);

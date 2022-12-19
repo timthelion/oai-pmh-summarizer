@@ -2,7 +2,12 @@ package cz.hobbs.openaire;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
+import org.apache.spark.sql.catalyst.encoders.RowEncoder;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructType;
 import org.apache.spark.ml.feature.Bucketizer;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -30,7 +35,7 @@ import static org.apache.spark.sql.functions.*;
 /**
  * The OAI_PMH Dataset class loads multi-page OAI_PMH data,
  * breaks it down into columns for easy querying,
- * and provides functions for sumarizing the data in a user friendly fashion.
+ * and provides functions for summarizing the data in a user friendly fashion.
  * 
  * @author Timothy
  *
@@ -113,7 +118,7 @@ public class OAIPMHDataset
             .load(bigXMLFile);
         bareXMLRows.printSchema();
         this.dataset = bareXMLRows
-            	.withColumn("recordId", col("metadata.resource.identifier._VALLUE"))
+            	.withColumn("recordId", col("metadata.resource.identifier._VALUE"))
             	.withColumn("recordType", col("metadata.resource.resourceType._VALUE"))
             	.withColumn("publicationYear", col("metadata.resource.publicationYear"))
             	.withColumn("authors", col("metadata.resource.creators"));
@@ -130,12 +135,30 @@ public class OAIPMHDataset
     
     public void summarizeInFiveYearPeriods() {
     	System.out.println("Publications by 5 year period");
-    	ArrayList<Integer> splits = new ArrayList<Integer>();
     	int thisYear = Year.now().getValue();
-    	for (Integer i = 1970; i < thisYear; i+=5) {
-    		splits.add(i);
+    	double[] splits = new double[(thisYear-1970)/5+1];
+    	int n = 0;
+    	for (double i = 1970.0; i < thisYear; i+=5) 
+    	{
+    		splits[n++] = i;
     	}
-    	Bucketizer b = new Bucketizer();
+    	Bucketizer b = new Bucketizer()
+    			.setInputCol("publicationYear")
+    		    .setOutputCol("publicationYear_range")
+    		    .setSplits(splits);
+    	
+        Dataset<Row> groupedByYear = b.transform(this.dataset).groupBy("publicationYear_range").count();
+        
+        StructType customStructType = new StructType();
+
+        customStructType = customStructType.add("count", DataTypes.IntegerType, true);
+        customStructType = customStructType.add("publicationYear_range", DataTypes.IntegerType, true);
+     
+        /*Dataset<Row> withYearLabels = groupedByYear.map(row->{
+              return RowFactory.create(row.get(0), splits[(int) row.get(1)]);
+                }, RowEncoder.apply(customStructType));
+                */
+    	System.out.println(groupedByYear.showString(100000, 250, false));
     }
 
 	public void summarizeByTypology() {
