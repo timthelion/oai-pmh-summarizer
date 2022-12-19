@@ -102,4 +102,13 @@ public class OAIPMHDataset
     {
         this.spark.stop();
     }
+    
+    public void summarize() {
+    	this.summarizeByYear();
+    }
+
+	public void summarizeByYear() {
+        System.out.println("Publications by year");
+		System.out.println(this.dataset.groupBy("publicationYear").count().showString(100000, 250, false));
+	}
 }

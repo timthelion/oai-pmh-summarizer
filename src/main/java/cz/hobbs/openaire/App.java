@@ -39,6 +39,6 @@ public class App
 
         String endpointURI = endpointURIOptional.get();
         OAIPMHDataset data = new OAIPMHDataset(endpointURI);
-        System.out.println(data.dataset.describe());
+        data.summarize();
     }
 }
