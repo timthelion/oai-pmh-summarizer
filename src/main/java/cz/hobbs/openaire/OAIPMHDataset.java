@@ -11,10 +11,16 @@ import org.apache.spark.SparkContext;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -26,17 +32,6 @@ import org.w3c.dom.Node;
 
 import static org.apache.spark.sql.functions.col;
 
-import static org.apache.spark.sql.functions.col;
-
-import static org.apache.spark.sql.functions.col;
-
-import static org.apache.spark.sql.functions.col;
-
-import static org.apache.spark.sql.functions.col;
-
-import static org.apache.spark.sql.functions.col;
-
-
 public class OAIPMHDataset
 {
     FileCache fileCache;
@@ -44,7 +39,8 @@ public class OAIPMHDataset
     SparkSession spark;
 
     public OAIPMHDataset(String endpoint) throws IOException {
-        FileCache fileCache = new FileCache( Paths.get("").toAbsolutePath().normalize() + "/oaipmh-cache/");
+    	String cacheDir = Paths.get("").toAbsolutePath().normalize() + "/oaipmh-cache/";
+        FileCache fileCache = new FileCache(cacheDir);
 
         endpoint = endpoint + "?verb=ListRecords";
         // Create a SparkSession
@@ -53,21 +49,18 @@ public class OAIPMHDataset
             .config("spark.master", "local")
             .getOrCreate();
 
-        Logger.getLogger("org.apache").setLevel(Level.WARN);
+        Logger.getLogger("org.apache").setLevel(Level.WARN); // This doesn't seem to do anything, but it should work.
 
         String firstPage = endpoint + "&metadataPrefix=oai_datacite";
-        System.out.println(firstPage);
-        // Load the XML data from the stream into a Dataset<Row>
-        Dataset<Row> bareXMLRows = spark.read()
-            .format("xml")
-            .option("rowTag", "record") // specify the XML tag that defines a row
-            .load(fileCache.getFile(firstPage));
-        bareXMLRows.show();
-
         String page = firstPage;
+        
+        // We have to put everything in a giant xml file because multiple file inputs aren't supported without a HadoopFsRelationProvider and I don't want to set one up.
+        String bigXMLFile = cacheDir + "the-big-one.xml";
+        FileWriter bigXMLFileWriter = new FileWriter(bigXMLFile);
         ArrayList<String> pages = new ArrayList<String>();
         while(true) {
-            pages.add(page);
+	        String localPage = fileCache.getFile(page);
+        	pages.add(localPage);
         	// We need to get the resumption token so we list through the pages.
             // It is unclear to me how to load the resumption tokens when I've selected the record tags for my rows. So I load everything again, I know this isn't great. I'm new to spark.
         	// Indeed it seems its impossible https://github.com/databricks/spark-xml/issues/516
@@ -75,9 +68,16 @@ public class OAIPMHDataset
         	DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
 			try {
 	            DocumentBuilder builder = domFactory.newDocumentBuilder();
-	            Document dDoc = builder.parse(fileCache.getFile(page));
+	            Document dDoc = builder.parse(localPage);
 
 	            XPath xPath = XPathFactory.newInstance().newXPath();
+	            
+	            Node recordsList = (Node) xPath.evaluate("/OAI-PMH/ListRecords", dDoc, XPathConstants.NODE);
+	            Transformer transformer = TransformerFactory.newInstance().newTransformer();
+	            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+	            StreamResult xmlOutput = new StreamResult(bigXMLFileWriter);
+	            transformer.transform(new DOMSource(recordsList), xmlOutput);
+	            
 	            resumptionToken = (String) xPath.evaluate("/OAI-PMH/ListRecords/resumptionToken", dDoc, XPathConstants.STRING);
 	        
 	            System.out.println("Resumption token:" + resumptionToken);
@@ -92,16 +92,13 @@ public class OAIPMHDataset
             }
             page = endpoint + "&resumptionToken=" + resumptionToken;
         }
-
-        for(String page1 : pages) {
-            Dataset<Row> extraRows = spark.read()
-                .format("xml")
-                .option("rowTag", "record")
-                .load(fileCache.getFile(page1));
-
-            extraRows.show();
-            bareXMLRows = bareXMLRows.union(bareXMLRows);
-        }
+        bigXMLFileWriter.close();
+        // Load the XML data from the stream into a Dataset<Row>
+        Dataset<Row> bareXMLRows = spark.read()
+            .format("xml")
+            .option("rowTag", "record") // specify the XML tag that defines a row
+            .load(bigXMLFile);
+        bareXMLRows.show();
         this.dataset = bareXMLRows.selectExpr();
     }
 
