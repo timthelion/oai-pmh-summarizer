@@ -92,15 +92,21 @@ public class OAIPMHDataset
             .load(bigXMLFile);
         bareXMLRows.printSchema();
         this.dataset = bareXMLRows
-            	.withColumn("recordId", col("metadata.resource.identifier"))
-            	.withColumn("recordType", col("metadata.resource.resourceType"))
+            	.withColumn("recordId", col("metadata.resource.identifier._VALLUE"))
+            	.withColumn("recordType", col("metadata.resource.resourceType._VALUE"))
             	.withColumn("publicationYear", col("metadata.resource.publicationYear"))
             	.withColumn("authors", col("metadata.resource.creators"));
     }
     
     public void summarize() {
     	this.summarizeByYear();
+    	this.summarizeByTypology();
     }
+
+	public void summarizeByTypology() {
+		System.out.println("Publications by type");
+		System.out.println(this.dataset.groupBy("recordType").count().showString(100000, 250, false));
+	}
 
 	public void summarizeByYear() {
         System.out.println("Publications by year");

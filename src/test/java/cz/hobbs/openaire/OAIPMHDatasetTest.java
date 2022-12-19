@@ -30,11 +30,11 @@ public class OAIPMHDatasetTest
     }
 
     @Test
-    public void out() {
+    public void testSummarizeByYear() {
         System.setOut(new PrintStream(outContent));
         System.setErr(new PrintStream(errContent));
     	
-        ds.summarize();
+        ds.summarizeByYear();
         assertThat(outContent.toString(), containsString("2004"));
         assertThat(outContent.toString(), containsString("publicationYear"));
         
@@ -43,4 +43,17 @@ public class OAIPMHDatasetTest
         System.out.println(outContent);
     }
 
+    @Test
+    public void testSummarizeByType() {
+        System.setOut(new PrintStream(outContent));
+        System.setErr(new PrintStream(errContent));
+    	
+        ds.summarizeByTypology();
+        assertThat(outContent.toString(), containsString("journal"));
+        assertThat(outContent.toString(), containsString("recordType"));
+        
+        System.setOut(originalOut);
+        System.setErr(originalErr);
+        System.out.println(outContent);
+    }
 }
