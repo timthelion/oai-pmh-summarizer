@@ -51,7 +51,7 @@ public class OAIPMHDataset
             .config("spark.master", "local")
             .getOrCreate();
 
-        Logger.getLogger("org.apache").setLevel(Level.WARN); // This doesn't seem to do anything, but it should work.
+        spark.sparkContext().setLogLevel("ERROR");
 
         String firstPage = endpoint + "&metadataPrefix=oai_datacite";
         String page = firstPage;
@@ -81,8 +81,6 @@ public class OAIPMHDataset
 	            transformer.transform(new DOMSource(recordsList), xmlOutput);
 	            
 	            resumptionToken = (String) xPath.evaluate("/OAI-PMH/ListRecords/resumptionToken", dDoc, XPathConstants.STRING);
-	        
-	            System.out.println("Resumption token:" + resumptionToken);
 	        } catch (Exception e) {
 	            e.printStackTrace();
 	        }
