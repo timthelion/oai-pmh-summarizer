@@ -1,10 +1,6 @@
 package cz.hobbs.openaire;
-import cz.hobbs.openaire.FileCache;
-
 import java.io.File;
 import org.apache.commons.io.FileUtils;
-import java.util.Optional;
-
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 

@@ -1,14 +1,8 @@
 package cz.hobbs.openaire;
 
 import org.apache.spark.sql.Dataset;
-import org.apache.log4j.*;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.functions;
-import org.apache.spark.sql.types.StructType;
-import org.apache.spark.SparkFiles;
-import org.apache.spark.SparkContext;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -25,8 +19,6 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.spark.util.Utils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 

@@ -1,11 +1,5 @@
 package cz.hobbs.openaire;
 
-import java.net.URI;
-import java.net.URL;
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.FileOutputStream;
 import java.util.Optional;
 
 import org.apache.commons.cli.*;
