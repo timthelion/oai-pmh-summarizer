@@ -30,7 +30,9 @@ import org.apache.spark.util.Utils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
-import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.*;
+
+
 
 public class OAIPMHDataset
 {
@@ -96,10 +98,14 @@ public class OAIPMHDataset
         // Load the XML data from the stream into a Dataset<Row>
         Dataset<Row> bareXMLRows = spark.read()
             .format("xml")
-            .option("rowTag", "record") // specify the XML tag that defines a row
+            .option("rowTag", "record")
             .load(bigXMLFile);
-        bareXMLRows.show();
-        this.dataset = bareXMLRows.selectExpr();
+        bareXMLRows.printSchema();
+        this.dataset = bareXMLRows
+            	.withColumn("recordId", col("metadata.resource.identifier"))
+            	.withColumn("recordType", col("metadata.resource.resourceType"))
+            	.withColumn("publicationYear", col("metadata.resource.publicationYear"))
+            	.withColumn("authors", col("metadata.resource.creators"));
     }
 
     public void stop()
