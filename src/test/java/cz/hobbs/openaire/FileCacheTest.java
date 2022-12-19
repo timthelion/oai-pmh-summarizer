@@ -16,7 +16,7 @@ import org.junit.Test;
 public class FileCacheTest
 {
     @Test
-    public void testCache()
+    public void testCache() throws Exception
     {
         try {
             String cache_dir = "/tmp/openaire-testCache";
@@ -25,10 +25,12 @@ public class FileCacheTest
             FileUtils.deleteDirectory(new File(cache_dir));
 
             FileCache cache = new FileCache(cache_dir);
-            assertEquals(FileCache.getFile("https://hobbs.cz/index.html"), "/tmp/openaire-testCache/1.xml");
-            assertTrue(new File("/tmp/openaire-testCache/oai-pmh-cache.json").exists())
+            assertEquals(cache.getFile("https://hobbs.cz/index.html"), "/tmp/openaire-testCache/0.xml");
+            assertTrue(new File("/tmp/openaire-testCache/oai-pmh-cache.json").exists());
+            FileCache reloaded_cache = new FileCache(cache_dir);
+            assertEquals(reloaded_cache.cache.get("https://hobbs.cz/index.html"), "/tmp/openaire-testCache/0.xml");
         } catch (Exception e){
-            assertTrue(false);
+            throw e;
         }
     }
 }

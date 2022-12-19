@@ -1,8 +1,7 @@
 package cz.hobbs.openaire;
 
-import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,35 +9,46 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.HashMap;
 
+import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class FileCache
 {
-    HashMap<String, String> cache = new HashMap();
+    public HashMap<String, String> cache;
     String cacheDir;
 
     String fileNameMap = "oai-pmh-cache.json";
 
-    public reloadCacheFromDisk()
-    {
-        JSONParser parser = new JSONParser();
-        JSONObject jsonObject = (JSONObject) parser.parse(new FileReader(cacheDir + "/" + this.fileNameMap));
-        this.cache.readValue(jsonObject, HashMap.class);
+    public void reloadCacheFromDisk() {
+    
+    	File cacheFile = new File(cacheDir, this.fileNameMap);
+    	if(!cacheFile.exists()) {
+    		this.cache = new HashMap<String, String>();
+    		this.save();
+    		return;
+    	}
+        ObjectMapper mapperObj = new ObjectMapper();
+        try {
+			this.cache = mapperObj.readValue(cacheFile,
+			        new TypeReference<HashMap<String,String>>(){});
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
     }
 
-    public save()
+    public void save()
     {
 
         try {
             // Writing to a file
             File file=new File(cacheDir + "/" + this.fileNameMap);
+            file.getParentFile().mkdirs();
             file.createNewFile();
             FileWriter fileWriter = new FileWriter(file);
 
-            fileWriter.write(countryObj.toJSONString());
+            fileWriter.write(new JSONObject(this.cache).toJSONString());
             fileWriter.flush();
             fileWriter.close();
         } catch (IOException e) {
@@ -49,11 +59,10 @@ public class FileCache
     public FileCache(String cacheDir)
     {
         this.cacheDir = cacheDir;
-        cache = new ObjectMapper();
         this.reloadCacheFromDisk();
     }
 
-    public String getFile(String url)
+    public String getFile(String url) throws IOException
     {
         if (cache.containsKey(url))
         {
@@ -61,14 +70,23 @@ public class FileCache
         }
         else
         {
-            String filename = String.format("%d.xml", this.cache.size());
+            String filename = String.format("%s/%d.xml", this.cacheDir, this.cache.size());
             // Download file from url
-            InputStream xmlStream = new URL(endpointURI).openStream();
-            try (OutputStream outputStream = new FileOutputStream(filename)) {
-                IOUtils.copy(xmlStream, outputStream);
-            }
-            this.save()
-            return filename;
+            InputStream xmlStream;
+			try {
+				xmlStream = new URL(url).openStream();
+	            try (OutputStream outputStream = new FileOutputStream(filename)) {
+	                IOUtils.copy(xmlStream, outputStream);
+	            } catch (IOException e) {
+					e.printStackTrace();
+				}
+	            this.cache.put(url, filename);
+	            this.save();
+	            return filename;
+			} catch (IOException e1) {
+				throw e1;
+			}
+
         }
     }
 }

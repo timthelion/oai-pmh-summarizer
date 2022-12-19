@@ -1,1 +1,5 @@
 target/
+oaipmh-cache/
+.classpath
+.project
+.settings
