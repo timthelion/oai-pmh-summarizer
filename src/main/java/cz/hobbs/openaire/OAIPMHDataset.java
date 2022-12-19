@@ -97,11 +97,6 @@ public class OAIPMHDataset
             	.withColumn("publicationYear", col("metadata.resource.publicationYear"))
             	.withColumn("authors", col("metadata.resource.creators"));
     }
-
-    public void stop()
-    {
-        this.spark.stop();
-    }
     
     public void summarize() {
     	this.summarizeByYear();
@@ -111,4 +106,9 @@ public class OAIPMHDataset
         System.out.println("Publications by year");
 		System.out.println(this.dataset.groupBy("publicationYear").count().showString(100000, 250, false));
 	}
+	
+    public void stop()
+    {
+        this.spark.stop();
+    }
 }
