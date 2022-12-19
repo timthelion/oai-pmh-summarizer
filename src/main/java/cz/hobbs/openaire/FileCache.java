@@ -14,6 +14,13 @@ import org.json.simple.JSONObject;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * 
+ * File cache so we don't end up downloading things redundantly. Especially usefull during development to save time and allow offline development.
+ * 
+ * @author Timothy
+ *
+ */
 public class FileCache
 {
     public HashMap<String, String> cache;
@@ -21,6 +28,21 @@ public class FileCache
 
     String fileNameMap = "oai-pmh-cache.json";
 
+    /**
+     * Initializes a file cache object
+     * 
+     * @param cacheDir is where the files are downloaded. They are mapped to their original urls in a json file also stored in this directory.
+     */
+    public FileCache(String cacheDir)
+    {
+        this.cacheDir = cacheDir;
+        this.reloadCacheFromDisk();
+    }
+    
+    /**
+     * The cache state is stored in a JSON file on disk.
+     * This function loads the cache state from disk, discarding whatever cache state is in memory.
+     */
     public void reloadCacheFromDisk() {
     
     	File cacheFile = new File(cacheDir, this.fileNameMap);
@@ -38,6 +60,9 @@ public class FileCache
 		}
     }
 
+    /**
+     * Saves the cache state to disk.
+     */
     public void save()
     {
 
@@ -56,12 +81,13 @@ public class FileCache
         }
     }
 
-    public FileCache(String cacheDir)
-    {
-        this.cacheDir = cacheDir;
-        this.reloadCacheFromDisk();
-    }
-
+    /**
+     * Get a file from the cache or the internet.
+     * 
+     * @param url to fetch
+     * @return A local path to a downloaded file
+     * @throws IOException
+     */
     public String getFile(String url) throws IOException
     {
         if (cache.containsKey(url))

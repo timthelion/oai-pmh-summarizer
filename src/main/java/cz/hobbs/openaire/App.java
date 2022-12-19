@@ -6,8 +6,11 @@ import org.apache.commons.cli.*;
 
 public class App
 {
-    /*
-      Returns the endpoint to fetch from.
+    /**
+     * Parse CLI args and print help message
+     * 
+     * @param args are the cli arguments passed by the user
+     *  @return endpoint to load from if set
      */
     public static Optional<String> parse_args(String[] args) throws Exception {
         Options options = new Options(); // Modified from https://stackoverflow.com/a/367714/2126889
@@ -29,6 +32,12 @@ public class App
         }
     }
     
+    /**
+     * The main function.
+     * 
+     * @param args
+     * @throws Exception
+     */
     public static void main( String[] args ) throws Exception
     {
         Optional<String> endpointURIOptional = App.parse_args(args);
